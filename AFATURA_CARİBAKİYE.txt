@@ -1,0 +1,53 @@
+sub ProcessEvent(App)
+Dim SiparisReferans 
+ Dim MalzemeLOGOID
+dim sType
+         
+   strDBUser= "sa"    ' SQL Server kullanıcı adı
+   strDBPass= "Deneme123"  ' SQL Server kullanıcısının şifresi
+   strDBServer= "TRAKYASRV"   ' SQL Server
+   strDBName= "LOGO_DB"        ' Veritabanı adı  Lg201418*g
+
+
+        Set conn = CreateObject("ADODB.Connection")
+        conn.ConnectionString = "Provider=SQLOLEDB.1;Persist Security Info=False;User ID=" + strDBUser + ";Password=" + strDBPass + ";Initial Catalog=" + strDBName+ ";Data Source=" + strDBServer
+
+        conn.Open
+           
+       Set rs = CreateObject("adodb.recordset")
+           rs.ActiveConnection = conn
+
+          CHKodu = App.Doc.FieldAsString("ARP_CODE")
+
+          FaturaRef=App.Doc.FieldAsInteger("DATA_REFERENCE")
+          FaturaResStr=CStr(FaturaRef)
+
+          strQuery = "select SUM(CASE WHEN CLF.SIGN=0 THEN CLF.AMOUNT ELSE CLF.AMOUNT*(-1.00) END) from LG_223_01_CLFLINE CLF WITH(NOLOCK) "
+          strQuery = strQuery + "INNER JOIN LG_223_CLCARD CLC WITH(NOLOCK) ON CLC.LOGICALREF = CLF.CLIENTREF  "
+          strQuery = strQuery + "where CLF.CANCELLED=0 AND CLC.CODE='" + CHKodu + "' " 
+          strQuery = strQuery + "AND CLF.DATE_<=(SELECT DATE_ FROM LG_223_01_INVOICE WHERE LOGICALREF=" + FaturaResStr + ")"
+      
+       rs.Open strQuery, conn  
+           strEkAciklama = ""
+           do while (rs.EOF = false)
+
+                      
+               if rs.Fields(0).value>=0 then
+                   strEkAciklama = FormatNumber(ABS(CDbl(rs.Fields(0).value))) & "(B)"
+               else
+                   strEkAciklama = FormatNumber(ABS(CDbl(rs.Fields(0).value))) & "(A)"
+               end if
+               
+               strEkAciklama = "Cari Hesap Bakiyesi : " & strEkAciklama
+               App.Doc.WriteElementString "NOTES10", strEkAciklama
+
+               rs.MoveNext()                            
+           loop
+
+rs.close  
+
+App.Doc.SaveData          ' Yaptığımız değişiklikleri kaydediyoruz
+
+conn.close   
+       
+end sub

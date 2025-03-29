@@ -1,0 +1,468 @@
+SELECT     'ALIM İRSALİYE' [TÜRR], STFICHE.DATE_ AS [FİŞ TARİHİ], CASE MONTH(STFICHE.DATE_) 
+                      WHEN 1 THEN 'OCAK' WHEN 2 THEN 'ŞUBAT' WHEN 3 THEN 'MART' WHEN 4 THEN 'NİSAN' WHEN 5 THEN 'MAYIS' WHEN 6 THEN 'HAZİRAN' WHEN 7
+                       THEN 'TEMMUZ' WHEN 8 THEN 'AĞUSTOS' WHEN 9 THEN 'EYLÜL' WHEN 10 THEN 'EKİM' WHEN 11 THEN 'KASIM' WHEN 12 THEN 'ARALIK' END AS
+                       [İRSALİYE İŞLEM AYI], STFICHE.FICHENO AS [ FİŞ NO], STFICHE.DOCODE 'ORJİNAL irsaliye BELGE no',
+                          (SELECT     DCV.NUMFLDS1
+                            FROM          LG_180_DEFNFLDSCARDV DCV
+                            WHERE      DCV.PARENTREF = CLCARD.LOGICALREF AND DCV.LEVEL_ = 0 AND DCV.MODULENR = 5) 'Commission  Rate', 
+                      CASE STFICHE.BILLED WHEN 1 THEN 'FATURALANMIS' WHEN 0 THEN 'FATURALANMAMIS' END AS DURUMU, ITEMS.CODE AS [STOK KODU], 
+                      ITEMS.NAME AS [STOK AÇIKLAMA], ITEMS.NAME3 'STOK AÇIKLAMASI2', ITEMS.PRODCOUNTRY 'ÜRETİM YERİ', CLCARD.SPECODE5 'COD', 
+                      SUBSTRING(ITEMS.CODE, 3, 3) 'PRODUCT GROUP', SUBSTRING(ITEMS.CODE, 7, 3) 'GROUP KIRILIM', SUBSTRING(ITEMS.CODE, 11, 2) 
+                      'PRODUCT NAME 2', SUBSTRING(ITEMS.CODE, 14, 3) 'PRODUCT GSM', SUBSTRING(ITEMS.CODE, 18, 3) 'PRODUCT REEL WITH', 
+                      SUBSTRING(ITEMS.CODE, 22, 3) 'PRODUCT SPECAR', CLCARD.SPECODE AS [CARİ ÖZEL KODU], CLCARD.SPECODE2 AS [ÖZEL KOD2], 
+                      SLSMAN.DEFINITION_ AS [SATIŞ TEMSİLCİSİ], PAYPLANS.CODE AS [ODEME PLANI], CLCARD.CODE AS [C/H KODU], 
+                      CLCARD.DEFINITION_ AS [C/H UNVANI], STLINE.AMOUNT 'MIKTAR',
+                          /*                         L.CLIENTREF = CLCARD.LOGICALREF AND L.TRCODE IN (6) AND L.DATE_ BETWEEN '20230101' AND '21001231') END AS MIKTAR,*/ (SELECT     UNITSETL.CODE
+                                                                                                                                                                                                                                                                                                                                                                  FROM         dbo.LG_180_UNITSETL
+                                                                                                                                                                                                                                                                                                                                                                                         AS
+                                                                                                                                                                                                                                                                                                                                                                                         UNITSETL
+                                                                                                                                                                                                                                                                                                                                                                                         INNER
+                                                                                                                                                                                                                                                                                                                                                                                         JOIN
+                                                                                                                                                                                                                                                                                                                                                                                        dbo.LG_180_ITMUNITA
+                                                                                                                                                                                                                                                                                                                                                                                         AS
+                                                                                                                                                                                                                                                                                                                                                                                         ITMUNITA
+                                                                                                                                                                                                                                                                                                                                                                                         ON
+                                                                                                                                                                                                                                                                                                                                                                                         UNITSETL.LOGICALREF
+                                                                                                                                                                                                                                                                                                                                                                                         =
+                                                                                                                                                                                                                                                                                                                                                                                         ITMUNITA.UNITLINEREF
+                                                                                                                                                                                                                                                                                                                                                                  WHERE     (ITMUNITA.LINENR
+                                                                                                                                                                                                                                                                                                                                                                                         =
+                                                                                                                                                                                                                                                                                                                                                                                         1)
+                                                                                                                                                                                                                                                                                                                                                                                         AND
+                                                                                                                                                                                                                                                                                                                                                                                         (ITMUNITA.ITEMREF
+                                                                                                                                                                                                                                                                                                                                                                                         =
+                                                                                                                                                                                                                                                                                                                                                                                         ITEMS.LOGICALREF))
+                       AS BIRIM, STLINE.PRICE AS [BİRİM FİYAT], CASE STLINE.TRCODE WHEN 1 THEN
+                          (SELECT     SUM(TOTAL)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (1) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 6 THEN
+                          (SELECT     SUM(TOTAL)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (6) AND L.DATE_ BETWEEN '20230101' AND '21001231') END AS [TOPLAM TUTAR], 
+                      STLINE.DISTDISC AS [İSKONTO TUTARI], CASE STLINE.TRCODE WHEN 1 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (1) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 6 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (6) AND L.DATE_ BETWEEN '20230101' AND '21001231') END AS [NET SATIŞ TUTAR], STLINE.VATAMNT AS [KDV TUTARI], 
+                      CASE STLINE.TRCODE WHEN 1 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (1) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 6 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (6) AND L.DATE_ BETWEEN '20230101' AND '21001231') END + STLINE.VATAMNT AS [TOPLAM NET TUTAR], 
+STLINE.DISTEXP [MASRAF],
+----------------------
+  CASE STLINE.TRCODE WHEN 1 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (1) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 6 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (6) AND L.DATE_ BETWEEN '20230101' AND '21001231') END + STLINE.VATAMNT +STLINE.DISTEXP AS [TOPLAM NET TUTAR VE MASRAF],
+
+
+------------------------
+
+                      CASE STLINE.TRCURR WHEN 0 THEN 'TL' WHEN 1 THEN 'USD' WHEN 20 THEN 'EURO' ELSE 'DİĞER' END AS TİPİ, 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.PRICE ELSE STLINE.PRICE / STLINE.TRRATE END AS [DÖVİZLİ BİRİM FİYAT], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.TOTAL ELSE (STLINE.AMOUNT * STLINE.PRICE) / STLINE.TRRATE END AS [DÖVİZLİ TOPLAM TUTAR], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.DISTDISC ELSE STLINE.DISTDISC / STLINE.TRRATE END AS [DÖVİZLİ İSKONTO TUTARI], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATMATRAH ELSE STLINE.VATMATRAH / STLINE.TRRATE END AS [DÖVİZLİ NET SATIŞ TUTAR], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATAMNT ELSE STLINE.VATAMNT / STLINE.TRRATE END AS [DÖVİZLİ KDV TUTARI], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATMATRAH + STLINE.VATAMNT ELSE (STLINE.VATMATRAH / STLINE.TRRATE) 
+                      + (STLINE.VATAMNT / STLINE.TRRATE) END AS [DÖVİZLİ TOPLAM NET TUTAR], 
+                      (CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATMATRAH + STLINE.VATAMNT ELSE (STLINE.VATMATRAH / STLINE.TRRATE) 
+                      + (STLINE.VATAMNT / STLINE.TRRATE) END) * CLCARD.POSTCODE / 100 AS [KOMİSYON TUTARI], ITEMS.CYPHCODE AS [STOK YETKİ KODU], 
+                      ITEMS.STGRPCODE AS [GRUP KODU],
+                          (SELECT     DE.TEXTFLDS1
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Mill Order noo',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS2 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS2 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Confirmation Dt',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS3 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS3 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Conf Prod Date',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS4 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS4 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Conf Ship Dt',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS5 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS5 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Conf Del Dt',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS6 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS6 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'ETSI',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS7 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS7 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'ETAI',
+                          (SELECT     DE.TEXTFLDS8
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Vessel nameI',
+                          (SELECT     DE.TEXTFLDS9
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Carrier AgentI',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS10 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS10 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Shipment DateI',
+                          (SELECT     DE.TEXTFLDS11
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Port of Loading',
+                          (SELECT     DE.TEXTFLDS12
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'B/L No',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS13 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS13 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'B/L Date',
+                          (SELECT     DE.NUMFLDS14
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'No of Container',
+                          (SELECT     DE.NUMFLDS15
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'No of Units',
+                          (SELECT     DE.NUMFLDS16
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'İrsaliye Free Time',
+                          (SELECT     DE.TEXTFLDS17
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Invoice Number',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS18 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS18 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Invoice Date',
+                          (SELECT     CAT.CATDESC
+                            FROM          LG_CATEGLISTS CAT, LG_180_01_DEFNFLDSTRANV DEF, LG_180_01_STLINE STL WITH (NOLOCK)
+                            WHERE      (DEF.MODULENR = 9 AND CAT.RECORDID = 9 AND DEF.PARENTREF = STL.STFICHEREF AND OWNERREF = 0 AND LEVEL_ = 0 AND 
+                                                   NUMFLDS19 = CAT.TAG AND CAT.CATEGID = 10919 AND STL.TRCODE IN (6, 1) AND STL.LOGICALREF = STLINE.LOGICALREF)) 
+                      'İrsaliye Source',
+                          (SELECT     DE.TEXTFLDS20
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF AND STL.LOGICALREF = STLINE.LOGICALREF) 'Comm Pay Ref',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS21 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS21 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Comm Pay Date',
+                          (SELECT     DE.NUMFLDS22
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Commission Rate',
+                          (SELECT     DE.NUMFLDS23
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Credit Not',
+                          (SELECT     DE.TEXTFLDS25
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF AND STL.LOGICALREF = STLINE.LOGICALREF) 'İRS Sevkiyat Kodu',
+                          (SELECT     DE.NUMFLDS1
+                            FROM          LG_180_01_DEFNFLDSTRANV DE
+                            WHERE      DE.PARENTREF = STLINE.STFICHEREF AND DE.OWNERREF = STLINE.LOGICALREF AND DE.LEVEL_ = 1 AND DE.OWNERREF IN
+                                                       (SELECT     LOGICALREF
+                                                         FROM          LG_180_01_STLINE)) 'Gross guantity', 
+														 
+								------------------------------------------
+								   (SELECT     CAT.CATDESC
+                            FROM          LG_CATEGLISTS CAT, LG_180_01_DEFNFLDSTRANV DEF, LG_180_01_STLINE STL WITH (NOLOCK)
+                            WHERE      (DEF.MODULENR = 9 AND CAT.RECORDID = 9 AND DEF.PARENTREF = STL.STFICHEREF AND OWNERREF = 0 AND LEVEL_ = 0 AND 
+                                                   NUMFLDS27 = CAT.TAG AND CAT.CATEGID = 10927 AND STL.TRCODE IN (6, 1) AND STL.LOGICALREF = STLINE.LOGICALREF)) 
+                      'FSC',
+
+
+					    (SELECT     DE.TEXTFLDS24
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (6, 1) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'AV Invoice No',
+
+
+
+								--------------------------------------------
+														 
+														 
+														 
+														 
+														 
+														 
+														 
+														 
+														 CLCARD.ADDR1 'CARIADRES1', CLCARD.ADDR2 'CARIADRES2', 
+                      CLCARD.TOWN 'İLÇE', CLCARD.CITY 'ŞEHİR', CLCARD.COUNTRY 'ÜLKE', CLCARD.BANKNAMES1 'BANKA ADI1', 
+                      CLCARD.BANKBRANCHS1 'BANKA ŞUBESİ1', CLCARD.BANKACCOUNTS1 'BANKA HESABI1', CLCARD.BANKIBANS1 'IBAN1', 
+                      CLCARD.BANKBICS1 'BANKA BIC SWIFT1', CLCARD.BANKNAMES2 'BANKA ADI2', CLCARD.BANKBRANCHS2 'BANKA ŞUBESİ2', 
+                      CLCARD.BANKACCOUNTS2 'BANKA HESABI2', CLCARD.BANKIBANS2 'IBAN2', CLCARD.BANKBICS2 'BANKA BIC SWIFT2', 
+                      CASE STFICHE.TRCODE WHEN 1 THEN 'MAL ALIM FATURASI' WHEN 6 THEN 'ALIM İADE FATURASI' END AS TÜR,YEAR (STFICHE.DATE_) AS [İRSALİYE YIL]
+FROM         dbo.LG_180_01_STLINE AS STLINE LEFT OUTER JOIN
+                      dbo.LG_180_ITEMS AS ITEMS ON STLINE.STOCKREF = ITEMS.LOGICALREF LEFT OUTER JOIN
+                      dbo.LG_180_01_STFICHE AS STFICHE ON STFICHE.LOGICALREF = STLINE.STFICHEREF LEFT OUTER JOIN
+                      dbo.LG_180_CLCARD AS CLCARD ON CLCARD.LOGICALREF = STLINE.CLIENTREF LEFT OUTER JOIN
+                      dbo.LG_180_SPECODES AS SPECODES ON SPECODES.SPECODE = CLCARD.SPECODE AND SPECODES.SPECODETYPE = 26 LEFT OUTER JOIN
+                      dbo.LG_180_SPECODES AS SPECODES2 ON SPECODES.SPECODE = CLCARD.SPECODE2 AND SPECODES.SPECODETYPE = 26 LEFT OUTER JOIN
+                      dbo.LG_SLSMAN AS SLSMAN ON SLSMAN.LOGICALREF = STFICHE.SALESMANREF AND SLSMAN.FIRMNR = - 1 LEFT OUTER JOIN
+                      dbo.LG_180_PAYPLANS AS PAYPLANS ON PAYPLANS.LOGICALREF = STFICHE.PAYDEFREF
+WHERE     (STLINE.LINETYPE IN (0)) AND (STLINE.CANCELLED = 0) AND (STLINE.TRCODE IN (1, 6)) AND (STLINE.DATE_ BETWEEN '20230101' AND '21001231')
+
+---and STFICHE.FICHENO='050411'
+GROUP BY ITEMS.CODE, ITEMS.NAME, ITEMS.LOGICALREF, ITEMS.UNITSETREF, ITEMS.CYPHCODE, CLCARD.CODE, CLCARD.DEFINITION_, 
+                      CLCARD.LOGICALREF, ITEMS.SPECODE, ITEMS.STGRPCODE, STLINE.TRCODE, STLINE.LOGICALREF, STFICHE.DATE_, STFICHE.FICHENO, 
+                      STLINE.PRICE, STLINE.DISTDISC, STLINE.VATAMNT, STFICHE.SOURCEINDEX, STFICHE.TRCODE, CLCARD.SPECODE, CLCARD.SPECODE2, 
+                      CLCARD.CYPHCODE, SLSMAN.DEFINITION_, PAYPLANS.CODE, STLINE.TRRATE, STLINE.TRCURR, STLINE.AMOUNT, STLINE.TOTAL, 
+                      STLINE.VATMATRAH, STLINE.INVOICEREF, ITEMS.SPECODE3, STLINE.STFICHEREF, STFICHE.LOGICALREF, STFICHE.SPECODE, STFICHE.BILLED, 
+                      STFICHE.DOCODE, ITEMS.NAME3, ITEMS.PRODCOUNTRY, CLCARD.SPECODE5, CLCARD.ADDR1, CLCARD.ADDR2, CLCARD.TOWN, CLCARD.CITY, 
+                      CLCARD.COUNTRY, CLCARD.BANKNAMES1, CLCARD.BANKBRANCHS1, CLCARD.BANKACCOUNTS1, CLCARD.BANKIBANS1, CLCARD.BANKBICS1, 
+                      CLCARD.BANKNAMES2, CLCARD.BANKBRANCHS2, CLCARD.BANKACCOUNTS2, CLCARD.BANKIBANS2, CLCARD.BANKBICS2, 
+                      CLCARD.POSTCODE,STLINE.DISTEXP
+
+
+
+
+
+UNION ALL
+SELECT     'SATIŞ İRSALİYE' [TÜRR], STFICHE.DATE_ AS [FİŞ TARİHİ], CASE MONTH(STFICHE.DATE_) 
+                      WHEN 1 THEN 'OCAK' WHEN 2 THEN 'ŞUBAT' WHEN 3 THEN 'MART' WHEN 4 THEN 'NİSAN' WHEN 5 THEN 'MAYIS' WHEN 6 THEN 'HAZİRAN' WHEN 7
+                       THEN 'TEMMUZ' WHEN 8 THEN 'AĞUSTOS' WHEN 9 THEN 'EYLÜL' WHEN 10 THEN 'EKİM' WHEN 11 THEN 'KASIM' WHEN 12 THEN 'ARALIK' END AS
+                       [İRSALİYE İŞLEM AYI], STFICHE.FICHENO AS [ FİŞ NO], STFICHE.DOCODE 'ORJİNAL irsaliye BELGE no',
+                          (SELECT     DCV.NUMFLDS1
+                            FROM          LG_180_DEFNFLDSCARDV DCV
+                            WHERE      DCV.PARENTREF = CLCARD.LOGICALREF AND DCV.LEVEL_ = 0 AND DCV.MODULENR = 5) 'Commission  Rate', 
+                      CASE STFICHE.BILLED WHEN 1 THEN 'FATURALANMIS' WHEN 0 THEN 'FATURALANMAMIS' END AS DURUMU, ITEMS.CODE AS [STOK KODU], 
+                      ITEMS.NAME AS [STOK AÇIKLAMA], ITEMS.NAME3 'STOK AÇIKLAMASI2', ITEMS.PRODCOUNTRY 'ÜRETİM YERİ', CLCARD.SPECODE5 'COD', 
+                      SUBSTRING(ITEMS.CODE, 3, 3) 'PRODUCT GROUP', SUBSTRING(ITEMS.CODE, 7, 3) 'GROUP KIRILIM', SUBSTRING(ITEMS.CODE, 11, 2) 
+                      'PRODUCT NAME 2', SUBSTRING(ITEMS.CODE, 14, 3) 'PRODUCT GSM', SUBSTRING(ITEMS.CODE, 18, 3) 'PRODUCT REEL WITH', 
+                      SUBSTRING(ITEMS.CODE, 22, 3) 'PRODUCT SPECAR', CLCARD.SPECODE AS [CARİ ÖZEL KODU], CLCARD.SPECODE2 AS [ÖZEL KOD2], 
+                      SLSMAN.DEFINITION_ AS [SATIŞ TEMSİLCİSİ], PAYPLANS.CODE AS [ODEME PLANI], CLCARD.CODE AS [C/H KODU], 
+                      CLCARD.DEFINITION_ AS [C/H UNVANI], CASE STLINE.TRCODE WHEN 8 THEN
+                          (SELECT     SUM(((L.UINFO2 / L.UINFO1) * L.AMOUNT) / ((A.CONVFACT2 / A.CONVFACT1)))
+                            FROM          LG_180_01_STLINE L, LG_180_ITMUNITA A
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = A.ITEMREF AND A.LINENR = 1 AND A.ITEMREF = ITEMS.LOGICALREF AND 
+                                                   L.CLIENTREF = CLCARD.LOGICALREF AND L.TRCODE IN (8) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 3 THEN
+                          (SELECT     SUM(((L.UINFO2 / L.UINFO1) * L.AMOUNT) / ((A.CONVFACT2 / A.CONVFACT1)))
+                            FROM          LG_180_01_STLINE L, LG_180_ITMUNITA A
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = A.ITEMREF AND A.LINENR = 1 AND A.ITEMREF = ITEMS.LOGICALREF AND 
+                                                   L.CLIENTREF = CLCARD.LOGICALREF AND L.TRCODE IN (3) AND L.DATE_ BETWEEN '20230101' AND '21001231') END AS MIKTAR,
+                          (SELECT     UNITSETL.CODE
+                            FROM          dbo.LG_180_UNITSETL AS UNITSETL INNER JOIN
+                                                   dbo.LG_180_ITMUNITA AS ITMUNITA ON UNITSETL.LOGICALREF = ITMUNITA.UNITLINEREF
+                            WHERE      (ITMUNITA.LINENR = 1) AND (ITMUNITA.ITEMREF = ITEMS.LOGICALREF)) AS BIRIM, STLINE.PRICE AS [BİRİM FİYAT], 
+                      CASE STLINE.TRCODE WHEN 8 THEN
+                          (SELECT     SUM(TOTAL)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (8) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 3 THEN
+                          (SELECT     SUM(TOTAL)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (3) AND L.DATE_ BETWEEN '20230101' AND '21001231') END AS [TOPLAM TUTAR], 
+                      STLINE.DISTDISC AS [İSKONTO TUTARI], 
+					  
+					  CASE STLINE.TRCODE WHEN 8 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (8) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 3 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (3) AND L.DATE_ BETWEEN '20230101' AND '21001231') END AS [NET SATIŞ TUTAR], STLINE.VATAMNT AS [KDV TUTARI], 
+                      CASE STLINE.TRCODE WHEN 8 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (8) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 3 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (3) AND L.DATE_ BETWEEN '20230101' AND '21001231') END + STLINE.VATAMNT AS [TOPLAM NET TUTAR], 
+
+STLINE.DISTEXP [MASRAF],
+--------------------------
+CASE STLINE.TRCODE WHEN 8 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (8) AND L.DATE_ BETWEEN '20230101' AND '21001231') WHEN 3 THEN
+                          (SELECT     SUM(VATMATRAH)
+                            FROM          LG_180_01_STLINE L
+                            WHERE      L.LOGICALREF = STLINE.LOGICALREF AND L.STOCKREF = ITEMS.LOGICALREF AND L.CLIENTREF = CLCARD.LOGICALREF AND 
+                                                   L.TRCODE IN (3) AND L.DATE_ BETWEEN '20230101' AND '21001231') END + STLINE.VATAMNT+STLINE.DISTEXP AS [TOPLAM NET TUTAR VE MASRAF],
+												   -------------------------------------------------------
+
+
+                      CASE STLINE.TRCURR WHEN 0 THEN 'TL' WHEN 1 THEN 'USD' WHEN 20 THEN 'EURO' ELSE 'DİĞER' END AS TİPİ, 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.PRICE ELSE STLINE.PRICE / STLINE.TRRATE END AS [DÖVİZLİ BİRİM FİYAT], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.TOTAL ELSE (STLINE.AMOUNT * STLINE.PRICE) / STLINE.TRRATE END AS [DÖVİZLİ TOPLAM TUTAR], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.DISTDISC ELSE STLINE.DISTDISC / STLINE.TRRATE END AS [DÖVİZLİ İSKONTO TUTARI], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATMATRAH ELSE STLINE.VATMATRAH / STLINE.TRRATE END AS [DÖVİZLİ NET SATIŞ TUTAR], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATAMNT ELSE STLINE.VATAMNT / STLINE.TRRATE END AS [DÖVİZLİ KDV TUTARI], 
+                      CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATMATRAH + STLINE.VATAMNT ELSE (STLINE.VATMATRAH / STLINE.TRRATE) 
+                      + (STLINE.VATAMNT / STLINE.TRRATE) END AS [DÖVİZLİ TOPLAM NET TUTAR], 
+                      (CASE STLINE.TRRATE WHEN 0 THEN STLINE.VATMATRAH + STLINE.VATAMNT ELSE (STLINE.VATMATRAH / STLINE.TRRATE) 
+                      + (STLINE.VATAMNT / STLINE.TRRATE) END) * CLCARD.POSTCODE / 100 AS [KOMİSYON TUTARI], ITEMS.CYPHCODE AS [STOK YETKİ KODU], 
+                      ITEMS.STGRPCODE AS [GRUP KODU],
+                          (SELECT     DE.TEXTFLDS1
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE IN (3, 8) AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Mill Order noo',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS2 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS2 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Confirmation Dt',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS3 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS3 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Conf Prod Date',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS4 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS4 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Conf Ship Dt',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS5 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS5 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Conf Del Dt',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS6 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS6 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'ETSI',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS7 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS7 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'ETAI',
+                          (SELECT     DE.TEXTFLDS8
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Vessel nameI',
+                          (SELECT     DE.TEXTFLDS9
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Carrier AgentI',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS10 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS10 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Shipment DateI',
+                          (SELECT     DE.TEXTFLDS11
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Port of Loading',
+                          (SELECT     DE.TEXTFLDS12
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'B/L No',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS13 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS13 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'B/L Date',
+                          (SELECT     DE.NUMFLDS14
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'No of Container',
+                          (SELECT     DE.NUMFLDS15
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'No of Units',
+                          (SELECT     DE.NUMFLDS16
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'İrsaliye Free Time',
+                          (SELECT     DE.TEXTFLDS17
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Invoice Number',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS18 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS18 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Invoice Date',
+                          (SELECT     CAT.CATDESC
+                            FROM          LG_CATEGLISTS CAT, LG_180_01_DEFNFLDSTRANV DEF, LG_180_01_STLINE STL WITH (NOLOCK)
+                            WHERE      (DEF.MODULENR = 9 AND CAT.RECORDID = 9 AND DEF.PARENTREF = STL.STFICHEREF AND OWNERREF = 0 AND LEVEL_ = 0 AND 
+                                                   NUMFLDS19 = CAT.TAG AND CAT.CATEGID = 10919 AND STL.TRCODE = 8 AND STL.LOGICALREF = STLINE.LOGICALREF)) 
+                      'İrsaliye Source',
+                          (SELECT     DE.TEXTFLDS20
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF AND STL.LOGICALREF = STLINE.LOGICALREF) 'Comm Pay Ref',
+                          (SELECT     DBO.LG_INTTODATE(CASE DE.NUMFLDS21 WHEN 0 THEN 131465473 ELSE DE.NUMFLDS21 END)
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Comm Pay Date',
+                          (SELECT     DE.NUMFLDS22
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Commission Rate',
+                          (SELECT     DE.NUMFLDS23
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'Credit Not',
+                          (SELECT     DE.TEXTFLDS25
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF AND STL.LOGICALREF = STLINE.LOGICALREF) 'İRS Sevkiyat Kodu',
+                          (SELECT     DE.NUMFLDS1
+                            FROM          LG_180_01_DEFNFLDSTRANV DE
+                            WHERE      DE.PARENTREF = STLINE.STFICHEREF AND DE.OWNERREF = STLINE.LOGICALREF AND DE.LEVEL_ = 1 AND DE.OWNERREF IN
+                                                       (SELECT     LOGICALREF
+                                                         FROM          LG_180_01_STLINE)) 'Gross guantity',
+								---------------------------						 
+									(SELECT     CAT.CATDESC
+                            FROM          LG_CATEGLISTS CAT, LG_180_01_DEFNFLDSTRANV DEF, LG_180_01_STLINE STL WITH (NOLOCK)
+                            WHERE      (DEF.MODULENR = 9 AND CAT.RECORDID = 9 AND DEF.PARENTREF = STL.STFICHEREF AND OWNERREF = 0 AND LEVEL_ = 0 AND 
+                                                   NUMFLDS27 = CAT.TAG AND CAT.CATEGID = 10927 AND STL.TRCODE = 8 AND STL.LOGICALREF = STLINE.LOGICALREF)) 
+                      'FSC',					 
+									   (SELECT     DE.TEXTFLDS24
+                            FROM          LG_180_01_DEFNFLDSTRANV DE, LG_180_01_STLINE STL
+                            WHERE      DE.PARENTREF = STL.STFICHEREF AND DE.LEVEL_ = 0 AND DE.MODULENR = 9 AND OWNERREF = 0 AND STL.TRCODE = 8 AND 
+                                                   STL.LOGICALREF = STLINE.LOGICALREF) 'AV Invoice No',						 
+														 
+														 
+								------------------------------------------						 
+														 CLCARD.ADDR1 'CARIADRES1', CLCARD.ADDR2 'CARIADRES2', 
+                      CLCARD.TOWN 'İLÇE', CLCARD.CITY 'ŞEHİR', CLCARD.COUNTRY 'ÜLKE', CLCARD.BANKNAMES1 'BANKA ADI1', 
+                      CLCARD.BANKBRANCHS1 'BANKA ŞUBESİ1', CLCARD.BANKACCOUNTS1 'BANKA HESABI1', CLCARD.BANKIBANS1 'IBAN1', 
+                      CLCARD.BANKBICS1 'BANKA BIC SWIFT1', CLCARD.BANKNAMES2 'BANKA ADI2', CLCARD.BANKBRANCHS2 'BANKA ŞUBESİ2', 
+                      CLCARD.BANKACCOUNTS2 'BANKA HESABI2', CLCARD.BANKIBANS2 'IBAN2', CLCARD.BANKBICS2 'BANKA BIC SWIFT2', 
+                      CASE STFICHE.TRCODE WHEN 7 THEN 'PERAKENDE SATIŞ' WHEN 8 THEN 'TOPTAN SATIŞ' WHEN 3 THEN 'TOPTAN SATIŞ İADE' END AS TÜR,YEAR (STFICHE.DATE_) AS [İRSALİYE YIL]
+FROM         dbo.LG_180_01_STLINE AS STLINE LEFT OUTER JOIN
+                      dbo.LG_180_ITEMS AS ITEMS ON STLINE.STOCKREF = ITEMS.LOGICALREF LEFT OUTER JOIN
+                      dbo.LG_180_01_STFICHE AS STFICHE ON STFICHE.LOGICALREF = STLINE.STFICHEREF LEFT OUTER JOIN
+                      dbo.LG_180_CLCARD AS CLCARD ON CLCARD.LOGICALREF = STLINE.CLIENTREF LEFT OUTER JOIN
+                      dbo.LG_180_SPECODES AS SPECODES ON SPECODES.SPECODE = CLCARD.SPECODE AND SPECODES.SPECODETYPE = 26 LEFT OUTER JOIN
+                      dbo.LG_180_SPECODES AS SPECODES2 ON SPECODES.SPECODE = CLCARD.SPECODE2 AND SPECODES.SPECODETYPE = 26 LEFT OUTER JOIN
+                      dbo.LG_SLSMAN AS SLSMAN ON SLSMAN.LOGICALREF = STFICHE.SALESMANREF AND SLSMAN.FIRMNR = - 1 LEFT OUTER JOIN
+                      dbo.LG_180_PAYPLANS AS PAYPLANS ON PAYPLANS.LOGICALREF = STFICHE.PAYDEFREF
+WHERE     (STLINE.LINETYPE IN (0)) AND (STLINE.CANCELLED = 0) AND (STLINE.TRCODE IN (3, 8)) AND (STLINE.DATE_ BETWEEN '20230101' AND '21001231')
+
+---AND STFICHE.FICHENO='TEST'
+GROUP BY ITEMS.CODE, ITEMS.NAME, ITEMS.LOGICALREF, ITEMS.UNITSETREF, ITEMS.CYPHCODE, CLCARD.CODE, CLCARD.DEFINITION_, 
+                      CLCARD.LOGICALREF, ITEMS.SPECODE, ITEMS.STGRPCODE, STLINE.TRCODE, STLINE.LOGICALREF, STFICHE.DATE_, STFICHE.FICHENO, 
+                      STLINE.PRICE, STLINE.DISTDISC, STLINE.VATAMNT, STFICHE.SOURCEINDEX, STFICHE.TRCODE, CLCARD.SPECODE, CLCARD.SPECODE2, 
+                      CLCARD.CYPHCODE, SLSMAN.DEFINITION_, PAYPLANS.CODE, STLINE.TRRATE, STLINE.TRCURR, STLINE.AMOUNT, STLINE.TOTAL, 
+                      STLINE.VATMATRAH, STLINE.INVOICEREF, ITEMS.SPECODE3, STLINE.STFICHEREF, STFICHE.LOGICALREF, STFICHE.SPECODE, STFICHE.BILLED, 
+                      STFICHE.DOCODE, ITEMS.NAME3, ITEMS.PRODCOUNTRY, CLCARD.SPECODE5, CLCARD.ADDR1, CLCARD.ADDR2, CLCARD.TOWN, CLCARD.CITY, 
+                      CLCARD.COUNTRY, CLCARD.BANKNAMES1, CLCARD.BANKBRANCHS1, CLCARD.BANKACCOUNTS1, CLCARD.BANKIBANS1, CLCARD.BANKBICS1, 
+                      CLCARD.BANKNAMES2, CLCARD.BANKBRANCHS2, CLCARD.BANKACCOUNTS2, CLCARD.BANKIBANS2, CLCARD.BANKBICS2, CLCARD.POSTCODE,STLINE.DISTEXP
+
